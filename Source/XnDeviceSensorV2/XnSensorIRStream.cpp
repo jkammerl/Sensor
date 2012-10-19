@@ -87,6 +87,7 @@ XnStatus XnSensorIRStream::Init()
 		{ 0, XN_RESOLUTION_QVGA, 60 },
 		{ 0, XN_RESOLUTION_VGA, 30 },
 		{ 0, XN_RESOLUTION_SXGA, 30 },
+		{ 0, XN_RESOLUTION_SXGA, 15 },
 	};
 	nRetVal = AddSupportedModes(aSupportedModes, sizeof(aSupportedModes)/sizeof(aSupportedModes[0]));
 	XN_IS_STATUS_OK(nRetVal);
@@ -96,6 +97,7 @@ XnStatus XnSensorIRStream::Init()
 		XnCmosPreset aSupportedModesSXGA[] = 
 		{
 			{ 0, XN_RESOLUTION_SXGA, 30 },
+			{ 0, XN_RESOLUTION_SXGA, 15 },
 		};
 		nRetVal = AddSupportedModes(aSupportedModesSXGA, sizeof(aSupportedModesSXGA)/sizeof(aSupportedModesSXGA[0]));
 		XN_IS_STATUS_OK(nRetVal);

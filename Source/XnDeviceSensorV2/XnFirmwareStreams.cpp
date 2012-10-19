@@ -112,10 +112,11 @@ XnStatus XnFirmwareStreams::CheckClaimStream(const XnChar* strType, XnResolution
 			}
 
 			// check FPS
-			if (pIRStreamData->nFPS != nFPS)
-			{
-				XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Depth and IR streams must have the same FPS!");
-			}
+			// check FPS
+			//if (pIRStreamData->nFPS != nFPS)
+			//{
+			//	XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Depth and IR streams must have the same FPS!");
+			//}
 		}
 	}
 	else if (strcmp(strType, XN_STREAM_TYPE_IR) == 0)
@@ -144,10 +145,10 @@ XnStatus XnFirmwareStreams::CheckClaimStream(const XnChar* strType, XnResolution
 			}
 
 			// check FPS
-			if (pDepthStreamData->nFPS != nFPS)
-			{
-				XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Depth and IR streams must have the same FPS!");
-			}
+			//if (pDepthStreamData->nFPS != nFPS)
+			//{
+			//	XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Depth and IR streams must have the same FPS!");
+			//}
 		}
 	}
 	else if (strcmp(strType, XN_STREAM_TYPE_IMAGE) == 0)

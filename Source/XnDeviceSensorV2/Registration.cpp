@@ -248,10 +248,8 @@ void BuildDepthToShiftTable(XnUInt16* pDepth2Shift, XnSensorDepthStream* m_pStre
 	m_pStream->GetProperty(XN_STREAM_PROPERTY_ZERO_PLANE_DISTANCE, &nPlaneDsr);
 	dPlaneDsr = (XnDouble)nPlaneDsr;
 
-	XnUInt64 nDCRCDist;
 	XnDouble dDCRCDist;
-	m_pStream->GetProperty(XN_STREAM_PROPERTY_DCMOS_RCMOS_DISTANCE, &nDCRCDist);
-	dDCRCDist = (XnDouble)nDCRCDist;
+	m_pStream->GetProperty(XN_STREAM_PROPERTY_DCMOS_RCMOS_DISTANCE, &dDCRCDist);
 
 	XnDouble dPelSize = 1.0 / (dPlanePixelSize * nXScale * S2D_PEL_CONST);
 	XnDouble dPelDCC = dDCRCDist * dPelSize * S2D_PEL_CONST;
@@ -472,13 +470,28 @@ void XnRegistration::Apply1000(XnDepthPixel* pInput, XnDepthPixel* pOutput)
 			nNewX = (XnInt32)(XnDouble(*pRegTable)/XN_REG_X_SCALE + XnInt32(pDepth2ShiftTable[nValue]/XN_REG_PARAB_COEFF - nConstShift) * dShiftFactor);
 			nNewY = *(pRegTable+1);
 
-			if ((XnUInt32)nNewX-1 < (XnUInt32)nDepthXRes-1)
+			if ((XnUInt32)nNewX-1 < (XnUInt32)nDepthXRes-1 && (XnUInt32)nNewY <(XnUInt32) nDepthYRes)
 			{
 				nArrPos = nNewY * nDepthXRes + nNewX;
 				nOutValue = pOutput[nArrPos];
 
 				if (nOutValue == 0 || nOutValue > nValue)
 				{
+				  if ( nNewX > 0 && nNewY > 0 )
+					{
+						pOutput[nArrPos-nDepthXRes] = nValue;
+						pOutput[nArrPos-nDepthXRes-1] = nValue;
+						pOutput[nArrPos-1] = nValue;
+					}
+					else if( nNewY > 0 )
+					{
+						pOutput[nArrPos-nDepthXRes] = nValue;
+					}
+					else if( nNewX > 0 )
+					{
+						pOutput[nArrPos-1] = nValue;
+					}
+    
 					pOutput[nArrPos] = nValue;
 					pOutput[nArrPos-1] = nValue;
 					pOutput[nArrPos-nDepthXRes] = nValue;
@@ -523,7 +536,7 @@ void XnRegistration::Apply1080(XnDepthPixel* pInput, XnDepthPixel* pOutput)
 				nNewX = (XnUInt32)(*pRegTable + pRGBRegDepthToShiftTable[nValue]) / RGB_REG_X_VAL_SCALE;
 				nNewY = *(pRegTable+1);
 
-				if (nNewX < nDepthXRes)
+				if (nNewX < nDepthXRes && nNewY < nDepthYRes)
 				{
 					nArrPos = bMirror ? (nNewY+1)*nDepthXRes - nNewX : (nNewY*nDepthXRes) + nNewX;
 					nArrPos -= nConstOffset;

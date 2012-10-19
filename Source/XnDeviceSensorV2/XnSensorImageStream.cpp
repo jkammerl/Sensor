@@ -214,6 +214,14 @@ XnStatus XnSensorImageStream::Init()
 		nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_VGA, 30);
 		XN_IS_STATUS_OK(nRetVal);
 
+		// Suat: Enable Bayer images
+		nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_QVGA, 30);
+		XN_IS_STATUS_OK(nRetVal);
+		nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_QVGA, 60);
+		XN_IS_STATUS_OK(nRetVal);
+		nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_VGA, 30);
+		XN_IS_STATUS_OK(nRetVal);
+
 		// add uncompressed ones
 		if (bUncompressedAllowed)
 		{
@@ -223,22 +231,42 @@ XnStatus XnSensorImageStream::Init()
 			XN_IS_STATUS_OK(nRetVal);
 			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_VGA, 30);
 			XN_IS_STATUS_OK(nRetVal);
+      
+      // Suat: Enable umcompressed Bayer			
+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_SXGA, 15);
+			XN_IS_STATUS_OK(nRetVal);
+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_VGA, 30);
+			XN_IS_STATUS_OK(nRetVal);
+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_QVGA, 60);
+			XN_IS_STATUS_OK(nRetVal);
+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_QVGA, 30);
+			XN_IS_STATUS_OK(nRetVal);
 		}
 
 		// starting with FW 5.2, 25 FPS is also supported
-		if (m_Helper.GetFirmwareVersion() >= XN_SENSOR_FW_VER_5_2)
+		//Suat: changed to 5_1 since out 5_1_6 works good with 25Hz
+		if (m_Helper.GetFirmwareVersion() >= XN_SENSOR_FW_VER_5_1)
 		{
 			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_QVGA, 25);
 			XN_IS_STATUS_OK(nRetVal);
 			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_VGA, 25);
 			XN_IS_STATUS_OK(nRetVal);
-
+      // Suat: Enable Bayer
+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_QVGA, 25);
+			XN_IS_STATUS_OK(nRetVal);
+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_VGA, 25);
+			XN_IS_STATUS_OK(nRetVal);
+      
 			if (bUncompressedAllowed)
 			{
 				nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_QVGA, 25);
 				XN_IS_STATUS_OK(nRetVal);
 				nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_VGA, 25);
 				XN_IS_STATUS_OK(nRetVal);
+			  nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_QVGA, 25);
+			  XN_IS_STATUS_OK(nRetVal);
+			  nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_VGA, 25);
+			  XN_IS_STATUS_OK(nRetVal);
 			}
 		}
 
@@ -255,10 +283,14 @@ XnStatus XnSensorImageStream::Init()
 			{
 				nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_SXGA, 30);
 				XN_IS_STATUS_OK(nRetVal);
+				nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_SXGA, 30);
+				XN_IS_STATUS_OK(nRetVal);
 
 				if (bUncompressedAllowed)
 				{
 					nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_SXGA, 30);
+					XN_IS_STATUS_OK(nRetVal);
+					nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_SXGA, 30);
 					XN_IS_STATUS_OK(nRetVal);
 				}
 			}
@@ -370,7 +402,7 @@ XnStatus XnSensorImageStream::ValidateMode()
 			nInputFormat != XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422 &&
 			nInputFormat != XN_IO_IMAGE_FORMAT_BAYER)
 		{
-			XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Input format %d cannot be converted to RGB24!", nInputFormat);
+			//XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Input format %d cannot be converted to RGB24!", nInputFormat);
 		}
 		break;
 	case XN_OUTPUT_FORMAT_YUV422:
