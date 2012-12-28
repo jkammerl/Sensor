@@ -67,7 +67,7 @@ rm -rf ../$REDIST_DIR
 # Build Engine
 echo "Building..."
 make -C ../Build clean > /dev/null
-make -j$(calc_jobs_number) -C ../Build
+make -C ../Build
 
 # create redist folder structure
 echo "Creating redist folder..."

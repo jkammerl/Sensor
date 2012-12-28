@@ -8,3 +8,5 @@ DEFINES = XN_FORMATS_EXPORTS
 INC_DIRS = ../../../../Source/External/LibJPEG
 
 include ../EngineLibMakefile
+
+LIB_DIRS = ../../../../../OpenNI/Platform/Linux/Bin/${HOST_PLATFORM}-Release/

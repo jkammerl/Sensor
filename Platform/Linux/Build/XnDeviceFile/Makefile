@@ -6,3 +6,4 @@ DEFINES = XN_DEVICE_EXPORTS
 
 include ../EngineLibMakefile
 
+LIB_DIRS = ../../../../../OpenNI/Platform/Linux/Bin/${HOST_PLATFORM}-Release/
