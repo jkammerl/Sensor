@@ -1,0 +1,214 @@
+diff --git a/Source/XnDeviceSensorV2/Registration.cpp b/Source/XnDeviceSensorV2/Registration.cpp
+index 4f85eee..a7e9b77 100644
+--- a/Source/XnDeviceSensorV2/Registration.cpp
++++ b/Source/XnDeviceSensorV2/Registration.cpp
+@@ -248,10 +248,8 @@ void BuildDepthToShiftTable(XnUInt16* pDepth2Shift, XnSensorDepthStream* m_pStre
+ 	m_pStream->GetProperty(XN_STREAM_PROPERTY_ZERO_PLANE_DISTANCE, &nPlaneDsr);
+ 	dPlaneDsr = (XnDouble)nPlaneDsr;
+ 
+-	XnUInt64 nDCRCDist;
+ 	XnDouble dDCRCDist;
+-	m_pStream->GetProperty(XN_STREAM_PROPERTY_DCMOS_RCMOS_DISTANCE, &nDCRCDist);
+-	dDCRCDist = (XnDouble)nDCRCDist;
++	m_pStream->GetProperty(XN_STREAM_PROPERTY_DCMOS_RCMOS_DISTANCE, &dDCRCDist);
+ 
+ 	XnDouble dPelSize = 1.0 / (dPlanePixelSize * nXScale * S2D_PEL_CONST);
+ 	XnDouble dPelDCC = dDCRCDist * dPelSize * S2D_PEL_CONST;
+@@ -472,13 +470,28 @@ void XnRegistration::Apply1000(XnDepthPixel* pInput, XnDepthPixel* pOutput)
+ 			nNewX = (XnInt32)(XnDouble(*pRegTable)/XN_REG_X_SCALE + XnInt32(pDepth2ShiftTable[nValue]/XN_REG_PARAB_COEFF - nConstShift) * dShiftFactor);
+ 			nNewY = *(pRegTable+1);
+ 
+-			if ((XnUInt32)nNewX-1 < (XnUInt32)nDepthXRes-1)
++			if ((XnUInt32)nNewX-1 < (XnUInt32)nDepthXRes-1 && (XnUInt32)nNewY <(XnUInt32) nDepthYRes)
+ 			{
+ 				nArrPos = nNewY * nDepthXRes + nNewX;
+ 				nOutValue = pOutput[nArrPos];
+ 
+ 				if (nOutValue == 0 || nOutValue > nValue)
+ 				{
++				  if ( nNewX > 0 && nNewY > 0 )
++					{
++						pOutput[nArrPos-nDepthXRes] = nValue;
++						pOutput[nArrPos-nDepthXRes-1] = nValue;
++						pOutput[nArrPos-1] = nValue;
++					}
++					else if( nNewY > 0 )
++					{
++						pOutput[nArrPos-nDepthXRes] = nValue;
++					}
++					else if( nNewX > 0 )
++					{
++						pOutput[nArrPos-1] = nValue;
++					}
++    
+ 					pOutput[nArrPos] = nValue;
+ 					pOutput[nArrPos-1] = nValue;
+ 					pOutput[nArrPos-nDepthXRes] = nValue;
+@@ -523,7 +536,7 @@ void XnRegistration::Apply1080(XnDepthPixel* pInput, XnDepthPixel* pOutput)
+ 				nNewX = (XnUInt32)(*pRegTable + pRGBRegDepthToShiftTable[nValue]) / RGB_REG_X_VAL_SCALE;
+ 				nNewY = *(pRegTable+1);
+ 
+-				if (nNewX < nDepthXRes)
++				if (nNewX < nDepthXRes && nNewY < nDepthYRes)
+ 				{
+ 					nArrPos = bMirror ? (nNewY+1)*nDepthXRes - nNewX : (nNewY*nDepthXRes) + nNewX;
+ 					nArrPos -= nConstOffset;
+#diff --git a/Source/XnDeviceSensorV2/XnDeviceSensorIO.cpp b/Source/XnDeviceSensorV2/XnDeviceSensorIO.cpp
+#index 8fd955c..925fe87 100644
+#--- a/Source/XnDeviceSensorV2/XnDeviceSensorIO.cpp
+#+++ b/Source/XnDeviceSensorV2/XnDeviceSensorIO.cpp
+#@@ -470,7 +482,8 @@ XnStatus XnSensorIO::SetCallback(XnUSBEventCallbackFunctionPtr pCallbackPtr, voi
+# 	XnStatus nRetVal = XN_STATUS_OK;
+# 	
+# 	// try to register callback to a 5.0 device
+#-	nRetVal = xnUSBSetCallbackHandler(XN_SENSOR_VENDOR_ID, XN_SENSOR_5_0_PRODUCT_ID, NULL, pCallbackPtr, pCallbackData);
+#+// --avin mod--
+#+//	nRetVal = xnUSBSetCallbackHandler(XN_SENSOR_VENDOR_ID, XN_SENSOR_5_0_PRODUCT_ID, NULL, pCallbackPtr, pCallbackData);
+# 
+# 	return nRetVal;
+# }
+#diff --git a/Source/XnDeviceSensorV2/XnFirmwareStreams.cpp b/Source/XnDeviceSensorV2/XnFirmwareStreams.cpp
+#index eb2e45d..14ce80a 100644
+#--- a/Source/XnDeviceSensorV2/XnFirmwareStreams.cpp
+#+++ b/Source/XnDeviceSensorV2/XnFirmwareStreams.cpp
+#@@ -112,10 +112,11 @@ XnStatus XnFirmwareStreams::CheckClaimStream(const XnChar* strType, XnResolution
+# 			}
+# 
+# 			// check FPS
+#-			if (pIRStreamData->nFPS != nFPS)
+#-			{
+#-				XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Depth and IR streams must have the same FPS!");
+#-			}
+#+			// check FPS
+#+			//if (pIRStreamData->nFPS != nFPS)
+#+			//{
+#+			//	XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Depth and IR streams must have the same FPS!");
+#+			//}
+# 		}
+# 	}
+# 	else if (strcmp(strType, XN_STREAM_TYPE_IR) == 0)
+#@@ -144,10 +145,10 @@ XnStatus XnFirmwareStreams::CheckClaimStream(const XnChar* strType, XnResolution
+# 			}
+# 
+# 			// check FPS
+#-			if (pDepthStreamData->nFPS != nFPS)
+#-			{
+#-				XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Depth and IR streams must have the same FPS!");
+#-			}
+#+			//if (pDepthStreamData->nFPS != nFPS)
+#+			//{
+#+			//	XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Depth and IR streams must have the same FPS!");
+#+			//}
+# 		}
+# 	}
+# 	else if (strcmp(strType, XN_STREAM_TYPE_IMAGE) == 0)
+#diff --git a/Source/XnDeviceSensorV2/XnSensorIRStream.cpp b/Source/XnDeviceSensorV2/XnSensorIRStream.cpp
+#index ebf162a..d08ff46 100644
+#--- a/Source/XnDeviceSensorV2/XnSensorIRStream.cpp
+#+++ b/Source/XnDeviceSensorV2/XnSensorIRStream.cpp
+#@@ -87,6 +87,7 @@ XnStatus XnSensorIRStream::Init()
+# 		{ 0, XN_RESOLUTION_QVGA, 60 },
+# 		{ 0, XN_RESOLUTION_VGA, 30 },
+# 		{ 0, XN_RESOLUTION_SXGA, 30 },
+#+		{ 0, XN_RESOLUTION_SXGA, 15 },
+# 	};
+# 	nRetVal = AddSupportedModes(aSupportedModes, sizeof(aSupportedModes)/sizeof(aSupportedModes[0]));
+# 	XN_IS_STATUS_OK(nRetVal);
+#@@ -96,6 +97,7 @@ XnStatus XnSensorIRStream::Init()
+# 		XnCmosPreset aSupportedModesSXGA[] = 
+# 		{
+# 			{ 0, XN_RESOLUTION_SXGA, 30 },
+#+			{ 0, XN_RESOLUTION_SXGA, 15 },
+# 		};
+# 		nRetVal = AddSupportedModes(aSupportedModesSXGA, sizeof(aSupportedModesSXGA)/sizeof(aSupportedModesSXGA[0]));
+# 		XN_IS_STATUS_OK(nRetVal);
+#diff --git a/Source/XnDeviceSensorV2/XnSensorImageStream.cpp b/Source/XnDeviceSensorV2/XnSensorImageStream.cpp
+#index be42cc7..f73441e 100644
+#--- a/Source/XnDeviceSensorV2/XnSensorImageStream.cpp
+#+++ b/Source/XnDeviceSensorV2/XnSensorImageStream.cpp
+#@@ -214,6 +214,14 @@ XnStatus XnSensorImageStream::Init()
+# 		nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_VGA, 30);
+# 		XN_IS_STATUS_OK(nRetVal);
+# 
+#+		// Suat: Enable Bayer images
+#+		nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_QVGA, 30);
+#+		XN_IS_STATUS_OK(nRetVal);
+#+		nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_QVGA, 60);
+#+		XN_IS_STATUS_OK(nRetVal);
+#+		nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_VGA, 30);
+#+		XN_IS_STATUS_OK(nRetVal);
+#+
+# 		// add uncompressed ones
+# 		if (bUncompressedAllowed)
+# 		{
+#@@ -223,22 +231,42 @@ XnStatus XnSensorImageStream::Init()
+# 			XN_IS_STATUS_OK(nRetVal);
+# 			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_VGA, 30);
+# 			XN_IS_STATUS_OK(nRetVal);
+#+      
+#+      // Suat: Enable umcompressed Bayer			
+#+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_SXGA, 15);
+#+			XN_IS_STATUS_OK(nRetVal);
+#+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_VGA, 30);
+#+			XN_IS_STATUS_OK(nRetVal);
+#+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_QVGA, 60);
+#+			XN_IS_STATUS_OK(nRetVal);
+#+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_QVGA, 30);
+#+			XN_IS_STATUS_OK(nRetVal);
+# 		}
+# 
+# 		// starting with FW 5.2, 25 FPS is also supported
+#-		if (m_Helper.GetFirmwareVersion() >= XN_SENSOR_FW_VER_5_2)
+#+		//Suat: changed to 5_1 since out 5_1_6 works good with 25Hz
+#+		if (m_Helper.GetFirmwareVersion() >= XN_SENSOR_FW_VER_5_1)
+# 		{
+# 			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_QVGA, 25);
+# 			XN_IS_STATUS_OK(nRetVal);
+# 			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_VGA, 25);
+# 			XN_IS_STATUS_OK(nRetVal);
+#-
+#+      // Suat: Enable Bayer
+#+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_QVGA, 25);
+#+			XN_IS_STATUS_OK(nRetVal);
+#+			nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_VGA, 25);
+#+			XN_IS_STATUS_OK(nRetVal);
+#+      
+# 			if (bUncompressedAllowed)
+# 			{
+# 				nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_QVGA, 25);
+# 				XN_IS_STATUS_OK(nRetVal);
+# 				nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_VGA, 25);
+# 				XN_IS_STATUS_OK(nRetVal);
+#+			  nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_QVGA, 25);
+#+			  XN_IS_STATUS_OK(nRetVal);
+#+			  nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_VGA, 25);
+#+			  XN_IS_STATUS_OK(nRetVal);
+# 			}
+# 		}
+# 
+#@@ -255,11 +283,15 @@ XnStatus XnSensorImageStream::Init()
+# 			{
+# 				nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_SXGA, 30);
+# 				XN_IS_STATUS_OK(nRetVal);
+#+				nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_SXGA, 30);
+#+				XN_IS_STATUS_OK(nRetVal);
+# 
+# 				if (bUncompressedAllowed)
+# 				{
+# 					nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_SXGA, 30);
+# 					XN_IS_STATUS_OK(nRetVal);
+#+					nRetVal = AddSupportedMode(supportedModes, XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_SXGA, 30);
+#+					XN_IS_STATUS_OK(nRetVal);
+# 				}
+# 			}
+# 		}
+#@@ -370,7 +402,7 @@ XnStatus XnSensorImageStream::ValidateMode()
+# 			nInputFormat != XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422 &&
+# 			nInputFormat != XN_IO_IMAGE_FORMAT_BAYER)
+# 		{
+#-			XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Input format %d cannot be converted to RGB24!", nInputFormat);
+#+			//XN_LOG_WARNING_RETURN(XN_STATUS_DEVICE_BAD_PARAM, XN_MASK_DEVICE_SENSOR, "Input format %d cannot be converted to RGB24!", nInputFormat);
+# 		}
+# 		break;
+# 	case XN_OUTPUT_FORMAT_YUV422:
+#

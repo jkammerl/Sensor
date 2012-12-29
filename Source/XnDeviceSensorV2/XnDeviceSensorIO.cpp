@@ -30,6 +30,7 @@
 // Defines
 //---------------------------------------------------------------------------
 #define XN_SENSOR_VENDOR_ID			0x1D27
+#define XN_SENSOR_MSK_VENDOR_ID 0x045E
 
 //---------------------------------------------------------------------------
 // Enums
@@ -48,6 +49,8 @@ XnUInt16 XnSensorIO::ms_supportedProducts[] =
 	0x0500,
 	0x0600,
 	0x0601,
+  0x02AE,
+  0x02BF,
 };
 
 XnUInt32 XnSensorIO::ms_supportedProductsCount = sizeof(XnSensorIO::ms_supportedProducts) / sizeof(XnSensorIO::ms_supportedProducts[0]);
@@ -159,9 +162,11 @@ XnStatus XnSensorIO::OpenDataEndPoints(XnSensorUsbInterface nInterface, const Xn
 			XN_LOG_WARNING_RETURN(XN_STATUS_USB_INTERFACE_NOT_SUPPORTED, XN_MASK_DEVICE_IO, "Unknown interface type: %d", nInterface);
 		}
 
+/*
 		xnLogVerbose(XN_MASK_DEVICE_IO, "Setting USB alternative interface to %d...", nAlternativeInterface);
 		nRetVal = xnUSBSetInterface(m_pSensorHandle->USBDevice, 0, nAlternativeInterface);
 		XN_IS_STATUS_OK(nRetVal);
+*/
 	}
 
 	xnLogVerbose(XN_MASK_DEVICE_IO, "Opening endpoints...");
@@ -368,14 +373,15 @@ XnStatus XnSensorIO::CloseDevice()
 	return (XN_STATUS_OK);
 }
 
-XnStatus Enumerate(XnUInt16 nProduct, XnStringsSet& devicesSet)
+XnStatus Enumerate(XnUInt16 nVendor, XnUInt16 nProduct, XnStringsSet& devicesSet)
 {
 	XnStatus nRetVal = XN_STATUS_OK;
 	
 	const XnUSBConnectionString* astrDevicePaths;
 	XnUInt32 nCount;
 
-	nRetVal = xnUSBEnumerateDevices(XN_SENSOR_VENDOR_ID, nProduct, &astrDevicePaths, &nCount);
+  nRetVal = xnUSBEnumerateDevices(nVendor, nProduct, &astrDevicePaths, &nCount);
+	//nRetVal = xnUSBEnumerateDevices(XN_SENSOR_VENDOR_ID, nProduct, &astrDevicePaths, &nCount);
 	XN_IS_STATUS_OK(nRetVal);
 
 	for (XnUInt32 i = 0; i < nCount; ++i)
@@ -406,9 +412,11 @@ XnStatus XnSensorIO::EnumerateSensors(XnConnectionString* aConnectionStrings, Xn
 		// search for supported devices
 		for (XnUInt32 i = 0; i < ms_supportedProductsCount; ++i)
 		{
-			nRetVal = Enumerate(ms_supportedProducts[i], devicesSet);
+			nRetVal = Enumerate(XN_SENSOR_VENDOR_ID, ms_supportedProducts[i], devicesSet);
 			XN_IS_STATUS_OK(nRetVal);
-		}
+			nRetVal = Enumerate(XN_SENSOR_MSK_VENDOR_ID, ms_supportedProducts[i], devicesSet);
+			XN_IS_STATUS_OK(nRetVal);
+	  }
 	}
 #else
 	XnStringsSet devicesSet;
@@ -416,7 +424,9 @@ XnStatus XnSensorIO::EnumerateSensors(XnConnectionString* aConnectionStrings, Xn
 	// search for supported devices
 	for (XnUInt32 i = 0; i < ms_supportedProductsCount; ++i)
 	{
-		nRetVal = Enumerate(ms_supportedProducts[i], devicesSet);
+		nRetVal = Enumerate(XN_SENSOR_VENDOR_ID, ms_supportedProducts[i], devicesSet);
+		XN_IS_STATUS_OK(nRetVal);
+		nRetVal = Enumerate(XN_SENSOR_MSK_VENDOR_ID, ms_supportedProducts[i], devicesSet);
 		XN_IS_STATUS_OK(nRetVal);
 	}
 #endif

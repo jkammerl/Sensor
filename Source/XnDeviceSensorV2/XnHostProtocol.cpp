@@ -159,7 +159,7 @@ XnStatus XnHostProtocolInitFWParams(XnDevicePrivateData* pDevicePrivateData, XnU
 	pDevicePrivateData->FWInfo.nOpcodeGetPlatformString = OPCODE_INVALID;
 	pDevicePrivateData->FWInfo.nOpcodeGetUsbCore = OPCODE_GET_USB_CORE_TYPE;
 
-
+#if 1
 	pDevicePrivateData->FWInfo.nUSBDelayReceive = 100;
 	pDevicePrivateData->FWInfo.nUSBDelayExecutePreSend = 1;
 	pDevicePrivateData->FWInfo.nUSBDelayExecutePostSend = 10;
@@ -168,7 +168,16 @@ XnStatus XnHostProtocolInitFWParams(XnDevicePrivateData* pDevicePrivateData, XnU
 	pDevicePrivateData->FWInfo.nUSBDelaySetParamStream0Mode = 1;
 	pDevicePrivateData->FWInfo.nUSBDelaySetParamStream1Mode = 300;
 	pDevicePrivateData->FWInfo.nUSBDelaySetParamStream2Mode = 1;
-
+#else
+	pDevicePrivateData->FWInfo.nUSBDelayReceive = 1;
+	pDevicePrivateData->FWInfo.nUSBDelayExecutePreSend = 0;
+	pDevicePrivateData->FWInfo.nUSBDelayExecutePostSend = 0;
+	pDevicePrivateData->FWInfo.nUSBDelaySoftReset = 1;
+	pDevicePrivateData->FWInfo.nUSBDelaySetParamFlicker = 300;
+	pDevicePrivateData->FWInfo.nUSBDelaySetParamStream0Mode = 1;
+	pDevicePrivateData->FWInfo.nUSBDelaySetParamStream1Mode = 1;
+	pDevicePrivateData->FWInfo.nUSBDelaySetParamStream2Mode = 1;
+#endif
 	pDevicePrivateData->FWInfo.bGetImageCmosTypeSupported = FALSE;
 	pDevicePrivateData->FWInfo.bImageSupported = TRUE;
 
@@ -201,6 +210,10 @@ XnStatus XnHostProtocolInitFWParams(XnDevicePrivateData* pDevicePrivateData, XnU
 		{ XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_QVGA, 30 },
 		{ XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_QVGA, 60 },
 		{ XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_VGA, 30 },
+    { XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_SXGA, 15 },
+    { XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_QVGA, 30 },
+    { XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_QVGA, 60 },
+    { XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_VGA, 30 },
 	};
 	nRetVal = pDevicePrivateData->FWInfo.imageBulkModes.AddLast(imageCommonModes, sizeof(imageCommonModes)/sizeof(imageCommonModes[0]));
 	XN_IS_STATUS_OK(nRetVal);
@@ -212,6 +225,10 @@ XnStatus XnHostProtocolInitFWParams(XnDevicePrivateData* pDevicePrivateData, XnU
 		{ XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_QVGA, 30 },
 		{ XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_QVGA, 60 },
 		{ XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_VGA, 30 },
+    { XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_SXGA, 15 },
+    { XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_QVGA, 30 },
+    { XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_QVGA, 60 },
+    { XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_VGA, 30 },
 	};
 	nRetVal = pDevicePrivateData->FWInfo.imageIsoModes.AddLast(imageIsoModes, sizeof(imageIsoModes)/sizeof(imageIsoModes[0]));
 	XN_IS_STATUS_OK(nRetVal);
@@ -224,6 +241,7 @@ XnStatus XnHostProtocolInitFWParams(XnDevicePrivateData* pDevicePrivateData, XnU
 		{ 0, XN_RESOLUTION_QVGA, 60 },
 		{ 0, XN_RESOLUTION_VGA, 30 },
 		{ 0, XN_RESOLUTION_SXGA, 30 },
+		{ 0, XN_RESOLUTION_SXGA, 15 },
 	};
 	nRetVal = pDevicePrivateData->FWInfo.irModes.AddLast(irModes, sizeof(irModes)/sizeof(irModes[0]));
 	XN_IS_STATUS_OK(nRetVal);
@@ -347,6 +365,8 @@ XnStatus XnHostProtocolInitFWParams(XnDevicePrivateData* pDevicePrivateData, XnU
 		{
 			{ XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_QVGA, 25 },
 			{ XN_IO_IMAGE_FORMAT_YUV422, XN_RESOLUTION_VGA, 25 },
+			{ XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_QVGA, 25 },
+			{ XN_IO_IMAGE_FORMAT_BAYER, XN_RESOLUTION_VGA, 25 },
 		};
 		nRetVal = pDevicePrivateData->FWInfo.imageBulkModes.AddLast(imageModes25FpsCommon, sizeof(imageModes25FpsCommon)/sizeof(imageModes25FpsCommon[0]));
 		XN_IS_STATUS_OK(nRetVal);
@@ -357,6 +377,8 @@ XnStatus XnHostProtocolInitFWParams(XnDevicePrivateData* pDevicePrivateData, XnU
 		{
 			{ XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_QVGA, 25 },
 			{ XN_IO_IMAGE_FORMAT_UNCOMPRESSED_YUV422, XN_RESOLUTION_VGA, 25 },
+			{ XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_QVGA, 25 },
+			{ XN_IO_IMAGE_FORMAT_UNCOMPRESSED_BAYER, XN_RESOLUTION_VGA, 25 },
 		};
 		nRetVal = pDevicePrivateData->FWInfo.imageIsoModes.AddLast(imageModes25FpsIso, sizeof(imageModes25FpsIso)/sizeof(imageModes25FpsIso[0]));
 		XN_IS_STATUS_OK(nRetVal);

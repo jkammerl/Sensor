@@ -298,6 +298,9 @@ XnStatus XnSensorDepthStream::ConfigureStreamImpl()
 	nRetVal = m_Helper.GetCmosInfo()->SetCmosConfig(XN_CMOS_TYPE_DEPTH, GetResolution(), GetFPS());
 	XN_IS_STATUS_OK(nRetVal);
 
+  // Turn off the IR projector anti-cover thingy. 
+  // I find it annoying and It's off on the XBox360 so it must be safe :-)
+  XnHostProtocolSetParam(GetHelper()->GetPrivateData(), 0x105, 0);
 	return XN_STATUS_OK;
 }
 
