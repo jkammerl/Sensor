@@ -144,6 +144,7 @@ XnStatus XnSensorIO::OpenDataEndPoints(XnSensorUsbInterface nInterface, const Xn
 {
 	XnStatus nRetVal = XN_STATUS_OK;
 
+/*
 	// try to set requested interface
 	if (nInterface != XN_SENSOR_USB_INTERFACE_DEFAULT)
 	{
@@ -153,22 +154,21 @@ XnStatus XnSensorIO::OpenDataEndPoints(XnSensorUsbInterface nInterface, const Xn
 		{
 		case XN_SENSOR_USB_INTERFACE_ISO_ENDPOINTS:
 			nAlternativeInterface = fwInfo.nISOAlternativeInterface;
+      xnLogVerbose(XN_MASK_DEVICE_IO, "Setting USB alternative interface to XN_SENSOR_USB_INTERFACE_ISO_ENDPOINTS (%d)...", nAlternativeInterface);
 			break;
 		case XN_SENSOR_USB_INTERFACE_BULK_ENDPOINTS:
 			nAlternativeInterface = fwInfo.nBulkAlternativeInterface;
+      xnLogVerbose(XN_MASK_DEVICE_IO, "Setting USB alternative interface to XN_SENSOR_USB_INTERFACE_BULK_ENDPOINTS (%d)...", nAlternativeInterface);
 			break;
 		default:
 			XN_ASSERT(FALSE);
 			XN_LOG_WARNING_RETURN(XN_STATUS_USB_INTERFACE_NOT_SUPPORTED, XN_MASK_DEVICE_IO, "Unknown interface type: %d", nInterface);
 		}
 
-/*
-		xnLogVerbose(XN_MASK_DEVICE_IO, "Setting USB alternative interface to %d...", nAlternativeInterface);
 		nRetVal = xnUSBSetInterface(m_pSensorHandle->USBDevice, 0, nAlternativeInterface);
 		XN_IS_STATUS_OK(nRetVal);
-*/
 	}
-
+*/
 	xnLogVerbose(XN_MASK_DEVICE_IO, "Opening endpoints...");
 
 	// up until v3.0/4.0, Image went over 0x82, depth on 0x83, audio on 0x86, and control was using bulk EPs, at 0x4 and 0x85.
@@ -183,10 +183,23 @@ XnStatus XnSensorIO::OpenDataEndPoints(XnSensorUsbInterface nInterface, const Xn
 	nRetVal = xnUSBOpenEndPoint(m_pSensorHandle->USBDevice, 0x81, XN_USB_EP_BULK, XN_USB_DIRECTION_IN, &m_pSensorHandle->DepthConnection.UsbEp);
 	if (nRetVal == XN_STATUS_USB_ENDPOINT_NOT_FOUND)
 	{
-		bNewUSB = FALSE;
-		xnLogVerbose(XN_MASK_DEVICE_IO, "Endpoint 0x81 does not exist. Trying old USB: Opening 0x82 for depth...");
-		nRetVal = xnUSBOpenEndPoint(m_pSensorHandle->USBDevice, 0x82, XN_USB_EP_BULK, XN_USB_DIRECTION_IN, &m_pSensorHandle->DepthConnection.UsbEp);
+    // Try ISO mode before old USB
+    m_pSensorHandle->DepthConnection.bIsISO = TRUE;
+    xnLogVerbose(XN_MASK_DEVICE_IO, "Endpoint 0x81 does not exist. Trying XN_USB_EP_ISOCHRONOUS (%d)", fwInfo.nBulkAlternativeInterface);
+		nRetVal = xnUSBSetInterface(m_pSensorHandle->USBDevice, 0, fwInfo.nBulkAlternativeInterface);
 		XN_IS_STATUS_OK(nRetVal);
+    nRetVal = xnUSBOpenEndPoint(m_pSensorHandle->USBDevice, 0x81, XN_USB_EP_ISOCHRONOUS, XN_USB_DIRECTION_IN, &m_pSensorHandle->DepthConnection.UsbEp);
+		XN_IS_STATUS_OK(nRetVal);
+
+    // Try old USB
+    if (nRetVal == XN_STATUS_USB_ENDPOINT_NOT_FOUND)
+    {
+      m_pSensorHandle->DepthConnection.bIsISO = FALSE;
+		  bNewUSB = FALSE;
+      xnLogVerbose(XN_MASK_DEVICE_IO, "Endpoint 0x81 does not exist. Trying old USB: Opening 0x82 for depth...");
+      nRetVal = xnUSBOpenEndPoint(m_pSensorHandle->USBDevice, 0x82, XN_USB_EP_BULK, XN_USB_DIRECTION_IN, &m_pSensorHandle->DepthConnection.UsbEp);
+      XN_IS_STATUS_OK(nRetVal);
+    }
 	}
 	else
 	{
